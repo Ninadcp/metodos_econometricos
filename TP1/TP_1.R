@@ -115,3 +115,6 @@ for (i in adjust) {
   file_name <- paste0("grafico_density_", i, ".png")
   ggsave(file.path(output_folder, file_name), plot, width = 11, height = 11, dpi = 300)
 }
+#6
+#mujer enferma vs mujer no enferma vs hombre enfermo vs hombre no enfermo
+
