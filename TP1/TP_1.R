@@ -10,7 +10,7 @@ datos <- read.csv("Base de datos TP 1.csv")
 #grupos de personas. Interpreten el valor de la ECDF cuando el tiempo de supervivencia es 50 unidades de tiempo.
 
 ggplot(datos, aes(x = time)) +
-  stat_ecdf(geom = "step", color = "blue", pad = F, linewidth = 1) +
+  stat_ecdf(color = "blue", pad = F, linewidth = 1) +
   geom_vline(xintercept = 50, linetype = "dashed", color = "red") +
   labs(title = "Función de Distribución Acumulada Empírica (ECDF)",
        x = "Tiempo de supervivencia (días)",
