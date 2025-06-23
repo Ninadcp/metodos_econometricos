@@ -85,7 +85,7 @@ ggplot(df_total, aes(x = time, color = n)) +
 output_folder <- "graficos_density"
 if (!dir.exists(output_folder)) dir.create(output_folder)
 
-adjust <- c(0.25, 0.5, 0.75, 1, 1.25, 1.5, 2)
+adjust <- c(0.25, 0.5, 1, 1.25, 1.5, 2)
 
 for (i in adjust) {
   plot <- ggplot(datos, aes(x = time)) +
