@@ -72,7 +72,7 @@ for (n in tamaño) {
 }
 
 ggplot(df_total, aes(x = time, color = n)) +
-  stat_ecdf(geom = "step", size = 1) +
+  stat_ecdf(linewidth = 1, pad = F) +
   labs(title = "Funciones ECDF para diferentes tamaños de muestra",
        x = "Tiempo de supervivencia (días)",
        y = "Probabilidad acumulada",
