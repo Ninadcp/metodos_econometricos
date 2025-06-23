@@ -2,8 +2,9 @@ library(tidyverse)
 
 rm(list = ls())
 
-setwd("C:\\LUCA\\UdeSA\\Métodos Econométricos y Organización Industrial Aplicada\\TPs\\TP 1")
-
+#setwd("C:\\LUCA\\UdeSA\\Métodos Econométricos y Organización Industrial Aplicada\\TPs\\TP 1")
+#setwd("nina")
+#setwd("lujan")
 datos <- read.csv("Base de datos TP 1.csv")
 
 #1. Estimen y grafiquen la función de distribución acumulada para toda la muestra (ecdf), sin distinguir entre diferentes 
@@ -24,6 +25,19 @@ ecdf_fun(50)
 #2. Estimen y grafiquen la función de supervivencia e interpreten los resultados obtenidos, ¿cómo describirían los resultados 
 #del tratamiento sobre la supervivencia? (mayores momentos de mortalidad, tiempo mediano de supervivencia, etc). 1 Bonus: pue
 #-den agregar intervalos de confianza.
+
+t_values <- 0:212
+densidad <- numeric(length(t_values))
+
+# Calcular 1 - ECDF(t)
+for (i in seq_along(t_values)) {
+  t <- t_values[i]
+  densidad[i] <- 1 - ecdf_fun(t)
+}
+
+# Graficamos
+plot(t_values, densidad, type = "l", col = "blue",
+     xlab = "t", ylab = "1 - ECDF(t)", main = "Función de densidad")
 
 #3. Estimen la densidad de los tiempos de supervivencia utilizando alguno de los kernels vistos en clase (definan el bandwith 
 #con la Regla de Oro de Silverman) y grafiquen. ¿Cuáles son los tiempos de supervivencia más comunes? ¿Qué pueden decir sobre 
