@@ -1,5 +1,6 @@
 library(tidyverse)
 #hola
+#chau
 rm(list = ls())
 
 #setwd("C:\\LUCA\\UdeSA\\Métodos Econométricos y Organización Industrial Aplicada\\TPs\\TP 1")
