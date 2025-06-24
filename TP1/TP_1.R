@@ -1,5 +1,6 @@
 library(tidyverse)
 library(dplyr)
+library(tidyr)
 
 rm(list = ls())
 
@@ -78,8 +79,8 @@ plot(t_values, densidad, type = "l", col = "red", lwd = 2,
      ylab = expression("Probabilidad de sobrevivir más allá de t: 1 - ECDF(t)"),
      main = "Estimación de la función de supervivencia con IC")
 
-lines(t_values, lower_ic, col = "pink", lty = 2)
-lines(t_values, upper_ic, col = "pink", lty = 2)
+lines(t_values, lower_ic, col = "pink", lwd = 3)
+lines(t_values, upper_ic, col = "pink", lwd = 3)
 
 mtext("Intervalos de confianza calculados vía booststrap (R = 1000)")
 dev.off()
@@ -160,68 +161,85 @@ for (i in adjust) {
   ggsave(file.path(output_folder, file_name), plot, width = 11, height = 11, dpi = 300)
 }
 #6
+
 set.seed(123)  
 n_boot <- 1000
 t_values <- 0:212
 
-# Subgrupos, mujer enferma vs mujer no enferma vs hombre enfermo vs hombre no enfermo
-
-# Agrupo
+# Agrupo los datos por sexo y estado de enfermedad
 datos_agrup <- datos %>% group_by(sex, disease_state)
 
-# Subgrupos divididos
+# Divido en subgrupos (lista de dataframes)
 subgrupos <- datos_agrup %>% group_split()
 
-# Nombres 
+# Armo nombres descriptivos de los subgrupos
 nombres_subgrupos <- datos_agrup %>%
   group_keys() %>%
   mutate(nombre = paste0("supervivencia_", sex, "_", disease_state)) %>%
   pull(nombre)
 
-for (i in seq_along(subgrupos)) {
+# Agrego columna con nombre de grupo al dataset original (para graficar ECDF juntos)
+datos <- datos %>%
+  mutate(grupo = paste0(sex, "_", disease_state))
+
+# ---------------------------- gráfico de ECDF ----------------------------
+p_ecdf <- ggplot(datos, aes(x = time, color = grupo)) +
+  stat_ecdf(linewidth = 1) +
+  labs(
+    title = "ECDF por subgrupo",
+    x = "Tiempo de supervivencia (días)",
+    y = "Probabilidad acumulada"
+  ) +
+  theme_classic()
+
+# Guardo el gráfico de ECDF
+ggsave("ecdf_todos.png", plot = p_ecdf, width = 8, height = 4, dpi = 300)
+
+# ---------------------- Función de supervivencia c/ IC bootstrap ----------------------
+
+resultados <- lapply(seq_along(subgrupos), function(i) {
+  
   sub <- subgrupos[[i]]
-  nombre <- nombres_subgrupos[i]
+  grupo <- nombres_subgrupos[i]
+  ecdf_fun <- ecdf(sub$time)  # Calculo la ECDF 
   
-  # --- 1. Graficar ECDF ---
-  p_ecdf <- ggplot(sub, aes(x = time)) +
-    stat_ecdf(color = "blue", pad = FALSE, linewidth = 1) +
-    geom_vline(xintercept = 50, linetype = "dashed", color = "red") +
-    labs(
-      title = paste("ECDF -", nombre),
-      x = "Tiempo de supervivencia (días)",
-      y = "Probabilidad acumulada"
-    ) +
-    theme_classic()
+  # Para cada t calculo 1 - ECDF(t), o sea la prob de sobrevivir más allá de t
+  densidad <- sapply(t_values, function(t) 1 - ecdf_fun(t))  
   
-  ggsave(paste0("ecdf_", nombre, ".png"), plot = p_ecdf, width = 8, height = 4, dpi = 300)
+  # Ahora hago bootstrap
+  supervivencia_boot <- replicate(n_boot, {
+    muestra <- sample(sub$time, replace = TRUE) 
+    ecdf_boot <- ecdf(muestra)  
+    sapply(t_values, function(t) 1 - ecdf_boot(t))
+  })
   
-  # --- 2. Función de supervivencia + IC bootstrap ---
-  
-  ecdf_fun <- ecdf(sub$time)
-  densidad <- sapply(t_values, function(t) 1 - ecdf_fun(t))
-  
-  # Bootstrap
-  supervivencia_boot <- matrix(NA, nrow = length(t_values), ncol = n_boot)
-  
-  for (b in 1:n_boot) {
-    muestra <- sample(sub$time, replace = TRUE)
-    ecdf_boot <- ecdf(muestra)
-    supervivencia_boot[, b] <- sapply(t_values, function(t) 1 - ecdf_boot(t))
-  }
-  
+  # Calculo los IC al 95% (2.5% y 97.5%) para cada t
   lower_ic <- apply(supervivencia_boot, 1, quantile, probs = 0.025)
   upper_ic <- apply(supervivencia_boot, 1, quantile, probs = 0.975)
   
-  # Graficar y guardar con base R
-  png(filename = paste0("supervivencia_", nombre, ".png"), width = 800, height = 400)
-  plot(t_values, densidad, type = "l", col = "red", lwd = 2,
-       xlab = "Tiempo de supervivencia (días)",
-       ylab = expression("Probabilidad de sobrevivir más allá de t: 1 - ECDF(t)"),
-       main = paste("Función de Supervivencia con IC -", nombre))
-  
-  lines(t_values, lower_ic, col = "pink", lty = 2)
-  lines(t_values, upper_ic, col = "pink", lty = 2)
-  
-  mtext("Intervalos de confianza calculados vía bootstrap (R = 1000)")
-  dev.off()
-}
+  # Armo un data.frame 
+  data.frame(
+    t = t_values,
+    supervivencia = densidad,
+    lower_ic = lower_ic,
+    upper_ic = upper_ic,
+    grupo = grupo
+  )
+})
+
+# Uno todos los dataframes en uno solo
+datos_plot <- bind_rows(resultados)
+
+# Grafico función de supervivencia
+p_supervivencia <- ggplot(datos_plot, aes(x = t, y = supervivencia, color = grupo)) +
+  geom_line(linewidth = 1) +
+  geom_ribbon(aes(ymin = lower_ic, ymax = upper_ic, fill = grupo), alpha = 0.2, color = NA) +  
+  labs(
+    title = "Función de Supervivencia por Subgrupo con IC (bootstrap)",
+    x = "Tiempo de supervivencia (días)",
+    y = "Probabilidad de sobrevivir más allá de t"
+  ) +
+  theme_classic()
+
+# Guardo el gráfico
+ggsave("supervivencia_todos.png", plot = p_supervivencia, width = 8, height = 4, dpi = 300)
