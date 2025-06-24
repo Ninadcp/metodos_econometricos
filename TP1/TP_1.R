@@ -6,7 +6,7 @@ rm(list = ls())
 
 #setwd("C:\\LUCA\\UdeSA\\Métodos Econométricos y Organización Industrial Aplicada\\TPs\\TP 1")
 setwd("/Users/ninadicostanzopereira/Desktop/metodos_econometricos/TP1")
-#setwd("lujan")
+#setwd("C:/Users/luli_/OneDrive/Documentos/Maestría en Economía - UdeSA\Materias/Materias Optativas/Métodos Econométricos y Organización Industrial/Tutoriales/TP 1")
 datos <- read.csv("Base de datos TP 1.csv")
 
 #1. Estimen y grafiquen la función de distribución acumulada para toda la muestra (ecdf), sin distinguir entre diferentes 
