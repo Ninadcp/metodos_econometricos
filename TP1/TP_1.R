@@ -28,63 +28,36 @@ ecdf_fun(50)
 #del tratamiento sobre la supervivencia? (mayores momentos de mortalidad, tiempo mediano de supervivencia, etc). 1 Bonus: pue
 #-den agregar intervalos de confianza.
 
+# 2. Función de supervivencia con IC
 t_values <- 0:212
-densidad <- numeric(length(t_values))
+densidad <- sapply(t_values, function(t) 1 - ecdf_fun(t))
 
-# Calcular 1 - ECDF(t)
-for (i in seq_along(t_values)) {
-  t <- t_values[i]
-  densidad[i] <- 1 - ecdf_fun(t)
-}
-
-# Graficamos
-plot(t_values, densidad, type = "l", col = "blue",
-     xlab = "t", ylab = "1 - ECDF(t)", main = "Función de densidad")
-
-set.seed(123)  # Para reproducibilidad
-
-t_values <- 0:212
-n_boot <- 1000  # Número de muestras bootstrap
-densidad <- numeric(length(t_values))
-
-# ECDF original
-ecdf_fun <- ecdf(datos$time)
-
-# Calcular 1 - ECDF(t)
-for (i in seq_along(t_values)) {
-  t <- t_values[i]
-  densidad[i] <- 1 - ecdf_fun(t)
-}
-
-# Bootstrap: generar matriz donde cada columna es una muestra bootstrap
-supervivencia_boot <- matrix(NA, nrow = length(t_values), ncol = n_boot)
-
-for (b in 1:n_boot) {
+set.seed(123)
+n_boot <- 1000
+supervivencia_boot <- replicate(n_boot, {
   muestra <- sample(datos$time, replace = TRUE)
   ecdf_boot <- ecdf(muestra)
-  for (i in seq_along(t_values)) {
-    t <- t_values[i]
-    supervivencia_boot[i, b] <- 1 - ecdf_boot(t)
-  }
-}
+  sapply(t_values, function(t) 1 - ecdf_boot(t))
+})
 
-# Calcular intervalos de confianza al 95% para cada t
 lower_ic <- apply(supervivencia_boot, 1, quantile, probs = 0.025)
 upper_ic <- apply(supervivencia_boot, 1, quantile, probs = 0.975)
 
-# Graficar con IC
-png("superviviencia_IC.png", width=800, height=400)
-plot(t_values, densidad, type = "l", col = "red", lwd = 2,
-     xlab = "Tiempo de supervivencia (días)",
-     ylab = expression("Probabilidad de sobrevivir más allá de t: 1 - ECDF(t)"),
-     main = "Estimación de la función de supervivencia con IC")
+df_surv <- data.frame(
+  t = t_values,
+  supervivencia = densidad,
+  lower_ic = lower_ic,
+  upper_ic = upper_ic
+)
 
-lines(t_values, lower_ic, col = "pink", lwd = 3)
-lines(t_values, upper_ic, col = "pink", lwd = 3)
-
-mtext("Intervalos de confianza calculados vía booststrap (R = 1000)")
-dev.off()
-
+ggplot(df_surv, aes(x = t, y = supervivencia)) +
+  geom_line(color = "#1f77b4", linewidth = 1.2) +
+  geom_ribbon(aes(ymin = lower_ic, ymax = upper_ic), fill = "#1f77b4", alpha = 0.2) +
+  labs(title = "Función de Supervivencia con Intervalos de Confianza",
+       x = "Tiempo de supervivencia (días)",
+       y = expression("1 - ECDF(t)")) +
+  theme_classic()
+  
 #3. Estimen la densidad de los tiempos de supervivencia utilizando alguno de los kernels vistos en clase (definan el bandwith 
 #con la Regla de Oro de Silverman) y grafiquen. ¿Cuáles son los tiempos de supervivencia más comunes? ¿Qué pueden decir sobre 
 #la variabilidad de los tiempos de supervivencia? Comparen la densidad estimada en el tiempo 50 y 10 e interpreten.
