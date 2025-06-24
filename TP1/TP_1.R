@@ -1,10 +1,10 @@
 library(tidyverse)
-#hola
-#chau
+library(dplyr)
+
 rm(list = ls())
 
 #setwd("C:\\LUCA\\UdeSA\\Métodos Econométricos y Organización Industrial Aplicada\\TPs\\TP 1")
-#setwd("nina")
+#setwd("/Users/ninadicostanzopereira/Desktop/metodos_econometricos")
 #setwd("lujan")
 datos <- read.csv("Base de datos TP 1.csv")
 
@@ -117,4 +117,13 @@ for (i in adjust) {
 }
 #6
 #mujer enferma vs mujer no enferma vs hombre enfermo vs hombre no enfermo
+set.seed(123)  # Reproducibilidad
+n_boot <- 1000
+t_values <- 0:212
 
+# Subgrupos
+subgrupos <- datos %>% group_split(sex, disease_state)
+nombres_subgrupos <- datos %>% 
+  group_keys(sex, disease_state) %>% 
+  mutate(nombre = paste0("supervivencia_", sex, "_", disease_state)) %>% 
+  pull(nombre)
