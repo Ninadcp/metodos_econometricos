@@ -169,7 +169,7 @@ t_values <- 0:212
 # Agrupo los datos por sexo y estado de enfermedad
 datos_agrup <- datos %>% group_by(sex, disease_state)
 
-# Divido en subgrupos (lista de dataframes)
+# Divido en subgrupos
 subgrupos <- datos_agrup %>% group_split()
 
 # Armo nombres descriptivos de los subgrupos
