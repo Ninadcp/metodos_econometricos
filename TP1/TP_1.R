@@ -28,7 +28,6 @@ ecdf_fun(50)
 #del tratamiento sobre la supervivencia? (mayores momentos de mortalidad, tiempo mediano de supervivencia, etc). 1 Bonus: pue
 #-den agregar intervalos de confianza.
 
-# 2. Función de supervivencia con IC
 t_values <- 0:212
 densidad <- sapply(t_values, function(t) 1 - ecdf_fun(t))
 
@@ -51,8 +50,8 @@ df_surv <- data.frame(
 )
 
 ggplot(df_surv, aes(x = t, y = supervivencia)) +
-  geom_line(color = "#1f77b4", linewidth = 1.2) +
-  geom_ribbon(aes(ymin = lower_ic, ymax = upper_ic), fill = "#1f77b4", alpha = 0.2) +
+  geom_line(color = "blue", linewidth = 1.2) +
+  geom_ribbon(aes(ymin = lower_ic, ymax = upper_ic), fill = "pink", alpha = 0.2) +
   labs(title = "Función de Supervivencia con Intervalos de Confianza",
        x = "Tiempo de supervivencia (días)",
        y = expression("1 - ECDF(t)")) +
