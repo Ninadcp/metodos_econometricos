@@ -1,12 +1,27 @@
+#-------------------------------------------------------------------------------  
+#         Métodos Econométricos y Organización Industrial Aplicada 
+#
+#                         Ma. Florencia Gabrielli
+#                          Diego Fernández Meijide 
+#                           Trabajo Práctico N°1
+#
+#      Luca Bentivenga, Nina Di Costanzo Pereira, María Luján Puchot
+#-------------------------------------------------------------------------------  
+# Limpiar el entorno
+rm(list = ls())
+
+# Importamos librerías
 library(tidyverse)
 library(dplyr)
 library(tidyr)
 
-rm(list = ls())
+# Setear el directorio
 
 #setwd("C:\\LUCA\\UdeSA\\Métodos Econométricos y Organización Industrial Aplicada\\TPs\\TP 1")
-setwd("/Users/ninadicostanzopereira/Desktop/metodos_econometricos/TP1")
+#setwd("/Users/ninadicostanzopereira/Desktop/Métodos/metodos_econometricos/TP1")
 #setwd("C:/Users/luli_/OneDrive/Documentos/Maestría en Economía - UdeSA\Materias/Materias Optativas/Métodos Econométricos y Organización Industrial/Tutoriales/TP 1")
+
+# Abrir la base de datos
 datos <- read.csv("Base de datos TP 1.csv")
 
 #1. Estimen y grafiquen la función de distribución acumulada para toda la muestra (ecdf), sin distinguir entre diferentes 
@@ -24,8 +39,9 @@ ggplot(datos, aes(x = time)) +
 ecdf_fun <- ecdf(datos$time)
 ecdf_fun(50)
 
-#2. Estimen y grafiquen la función de supervivencia e interpreten los resultados obtenidos, ¿cómo describirían los resultados 
-#del tratamiento sobre la supervivencia? (mayores momentos de mortalidad, tiempo mediano de supervivencia, etc). 1 Bonus: pue
+#2. Estimen y grafiquen la función de supervivencia e interpreten los resultados 
+#obtenidos, ¿cómo describirían los resultados del tratamiento sobre la supervivencia? 
+#(mayores momentos de mortalidad, tiempo mediano de supervivencia, etc). 1 Bonus: pue
 #-den agregar intervalos de confianza.
 
 t_values <- 0:212
@@ -39,6 +55,7 @@ supervivencia_boot <- replicate(n_boot, {
   sapply(t_values, function(t) 1 - ecdf_boot(t))
 })
 
+# Calculamos los IC al 95% (2.5% y 97.5%) para cada t
 lower_ic <- apply(supervivencia_boot, 1, quantile, probs = 0.025)
 upper_ic <- apply(supervivencia_boot, 1, quantile, probs = 0.975)
 
@@ -70,17 +87,17 @@ bw_gr <- 1.06 * sigma_hat * n ^ (-1/5)
 
 densidad <- density(datos$time, kernel = "gaussian", bw = bw_gr, adjust = 1)
 
-#10 tiempos más comunes
+# 10 tiempos más comunes
 top_10 <- densidad$x[order(densidad$y, decreasing = T)[1:10]]
 print(top_10)
 
-#Densidad estimada en time = 50 vs time = 10
+# Densidad estimada en time = 50 vs time = 10
 dens_10 <- approx(densidad$x, densidad$y, xout = 10)$y
 dens_50 <- approx(densidad$x, densidad$y, xout = 50)$y
 
 cat("Densidad estimada en el tiempo 10:", dens_10, "Densidad estimada en el tiempo 50:", dens_50, "\n")
 
-#Graficamos
+# Graficamos
 ggplot(datos, aes(x = time)) +
   geom_density(kernel = "gaussian", bw = bw_gr, adjust = 1, fill = "blue") +
   geom_vline(xintercept = c(10, 50), linetype = "dashed", color = "red") +
@@ -132,25 +149,24 @@ for (i in adjust) {
   file_name <- paste0("grafico_density_", i, ".png")
   ggsave(file.path(output_folder, file_name), plot, width = 11, height = 11, dpi = 300)
 }
-#6
+
+#6.Consideren al menos dos variables para crear subgrupos de pacientes y repitan 
+# los puntos 1 y 2
 
 set.seed(123)  
 n_boot <- 1000
 t_values <- 0:212
 
-# Agrupo los datos por sexo y estado de enfermedad
+# Agrupamos los datos por sexo y estado de enfermedad
 datos_agrup <- datos %>% group_by(sex, disease_state)
 
-# Divido en subgrupos
 subgrupos <- datos_agrup %>% group_split()
-
-# Armo nombres descriptivos de los subgrupos
 nombres_subgrupos <- datos_agrup %>%
   group_keys() %>%
   mutate(nombre = paste0("supervivencia_", sex, "_", disease_state)) %>%
   pull(nombre)
 
-# Agrego columna con nombre de grupo al dataset original (para graficar ECDF juntos)
+# Agregamos columna con nombre de grupo al dataset original (para graficar ECDF juntos)
 datos <- datos %>%
   mutate(grupo = paste0(sex, "_", disease_state))
 
@@ -164,7 +180,7 @@ p_ecdf <- ggplot(datos, aes(x = time, color = grupo)) +
   ) +
   theme_classic()
 
-# Guardo el gráfico de ECDF
+# Guardamos el gráfico de ECDF
 ggsave("ecdf_todos.png", plot = p_ecdf, width = 8, height = 4, dpi = 300)
 
 # ---------------------- Función de supervivencia c/ IC bootstrap ----------------------
@@ -173,23 +189,21 @@ resultados <- lapply(seq_along(subgrupos), function(i) {
   
   sub <- subgrupos[[i]]
   grupo <- nombres_subgrupos[i]
-  ecdf_fun <- ecdf(sub$time)  # Calculo la ECDF 
+  ecdf_fun <- ecdf(sub$time)
   
-  # Para cada t calculo 1 - ECDF(t), o sea la prob de sobrevivir más allá de t
+  # Para cada t calculamos 1 - ECDF(t), o sea la prob de sobrevivir más allá de t
   densidad <- sapply(t_values, function(t) 1 - ecdf_fun(t))  
   
-  # Ahora hago bootstrap
   supervivencia_boot <- replicate(n_boot, {
     muestra <- sample(sub$time, replace = TRUE) 
     ecdf_boot <- ecdf(muestra)  
     sapply(t_values, function(t) 1 - ecdf_boot(t))
   })
   
-  # Calculo los IC al 95% (2.5% y 97.5%) para cada t
+  # Calculamos los IC al 95% (2.5% y 97.5%) para cada t
   lower_ic <- apply(supervivencia_boot, 1, quantile, probs = 0.025)
   upper_ic <- apply(supervivencia_boot, 1, quantile, probs = 0.975)
   
-  # Armo un data.frame 
   data.frame(
     t = t_values,
     supervivencia = densidad,
@@ -199,7 +213,6 @@ resultados <- lapply(seq_along(subgrupos), function(i) {
   )
 })
 
-# Uno todos los dataframes en uno solo
 datos_plot <- bind_rows(resultados)
 
 # Grafico función de supervivencia
