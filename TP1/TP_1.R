@@ -18,8 +18,13 @@ library(tidyr)
 # Setear el directorio
 
 #setwd("C:\\LUCA\\UdeSA\\Métodos Econométricos y Organización Industrial Aplicada\\TPs\\TP 1")
+<<<<<<< Updated upstream
 #setwd("/Users/ninadicostanzopereira/Desktop/Métodos/metodos_econometricos/TP1")
 #setwd("C:/Users/luli_/OneDrive/Documentos/Maestría en Economía - UdeSA/Materias/Materias Optativas/Métodos Econométricos y Organización Industrial/Tutoriales/TP 1")
+=======
+setwd("/Users/ninadicostanzopereira/Desktop/Métodos/metodos_econometricos/TP1")
+#setwd("C:/Users/luli_/OneDrive/Documentos/Maestría en Economía - UdeSA\Materias/Materias Optativas/Métodos Econométricos y Organización Industrial/Tutoriales/TP 1")
+>>>>>>> Stashed changes
 
 # Abrir la base de datos
 datos <- read.csv("Base de datos TP 1.csv")
